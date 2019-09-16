@@ -7,7 +7,6 @@
 # package dev86 is required
 AS86 = as86 -0 -a
 LD86 = ld86 -0
-
 HOSTCFLAGS = -Wall -Wstrict-prototypes -g
 HOSTCC = gcc
 CC = gcc
@@ -18,7 +17,8 @@ OBJCOPY = objcopy -O binary -R .note -R .comment -S
 INCLUDEDIR = include
 
 
-CFLAGS = -m32 -O2  -g -fno-omit-frame-pointer -ffreestanding -Wall -I$(INCLUDEDIR) -fno-PIC
+CFLAGS = -m32 -O2 -g -fno-omit-frame-pointer -ffreestanding -Wall -I$(INCLUDEDIR) -fno-PIC
+CFLAGSUSER = -m32 -g -fno-omit-frame-pointer -ffreestanding -Wall -I$(INCLUDEDIR) -fno-PIC
 ASMFLAGS = -I$(INCLUDEDIR)
 LDFLAGS = -g -melf_i386
 
@@ -68,6 +68,7 @@ sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 user.o:user.c $(INCLUDEDIR)/libc.h
+	$(CC) $(CFLAGSUSER) -c user.c
 
 interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h
 

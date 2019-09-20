@@ -33,7 +33,8 @@ Now execute "objdump -d user". Do the addresses match? Why?
 
 Run the whole program in the bochs debugger (continue command). To regain control in the
 debugger you have to type Ctrl+C. After doing so, which line is going to be executed?.
-- 0x0010003b
+- 'jmp 100000 <main>'
+ it is the same address as before because it is compiled with the flag -O2 and the function call is removed for optimizations
 
 Take a look at the dissasemble code from user file again. Can you see the invoking call
 to the function add?

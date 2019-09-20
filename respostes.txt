@@ -42,4 +42,18 @@ Can you solve the problem?
 - Yes by making user.o compiled without 'O2'
 
 
+How is the dynamic link generated?
+
+
+How are the parameters accessed?
+- The parameters are accessed in the stack of the function:
+    mov    0x8(%ebp),%edx
+    mov    0xc(%ebp),%eax
+How is the result returned?
+- the result value is put in the eax register because it is the return register:
+    add    %edx,%eax
+
+Which  address  did  you  enter  in  the  Bochs  debugger  to  access  the  variable
+that  stores  the resulting value from the add function?
+
 

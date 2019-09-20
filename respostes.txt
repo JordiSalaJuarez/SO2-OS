@@ -43,7 +43,8 @@ Can you solve the problem?
 
 
 How is the dynamic link generated?
-
+   user: user.o suma.o user.lds $(USROBJ)
+       $(LD) $(LDFLAGS) -T user.lds -o $@ $< $(USROBJ)
 
 How are the parameters accessed?
 - The parameters are accessed in the stack of the function:
@@ -55,5 +56,5 @@ How is the result returned?
 
 Which  address  did  you  enter  in  the  Bochs  debugger  to  access  the  variable
 that  stores  the resulting value from the add function?
-
-
+- When the function returns, the return value is stored in the eax register.
+After the execution of the function we look for the register values and get the eax value.

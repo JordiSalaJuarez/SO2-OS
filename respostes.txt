@@ -33,7 +33,7 @@ Now execute "objdump -d user". Do the addresses match? Why?
 
 Run the whole program in the bochs debugger (continue command). To regain control in the
 debugger you have to type Ctrl+C. After doing so, which line is going to be executed?.
-- 
+- 0x0010003b
 
 Take a look at the dissasemble code from user file again. Can you see the invoking call
 to the function add?

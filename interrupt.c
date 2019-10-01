@@ -6,10 +6,8 @@
 #include <segment.h>
 #include <hardware.h>
 #include <io.h>
-#include <sys.h>
 
 #include <zeos_interrupt.h>
-#include <helpers.h>
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -32,7 +30,7 @@ char char_map[] =
 };
 
 void keyboard_handler();
-q
+void system_call_handler();
 
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 {
@@ -98,11 +96,10 @@ void setIdt()
 void keyboard_routine(){
   char data_key = inb(0x60);
   char is_make = data_key & 0x80;
-  char scan_code = data_key & 0x7f;
+  char addr = data_key & 0x7f;
   if (is_make)	{
-	char c = char_map[scan_code];
-	if (c != '\0'){
-		printc_xy(0x0, 0x0, c);
+	if (addr < sizeof(char_map)/sizeof(char) && char_map[addr] != '\0'){
+		printc_xy(0x0, 0x0, char_map[addr]);
 	} else {
 		printc_xy(0x0, 0x0, 'C');
 	}
@@ -120,19 +117,5 @@ int check_buffer(char *buffer){
 	}
 }
 
-int sys_write(int fd, char *buffer, int size){
-	if (check_fd(fd, ESCRITURA) < 0){
-		return -1;
-	}
-	if (check_buffer(buffer) < 0){
-		return -1;
-	}
-	if (size < 0){
-		return -1;
-	}
-	if (! acces_ok(ESCRITURA, buffer, size)){
-		copy_to_user(buffer, buffer + size, size);	
-	}
-		
-}
+
 

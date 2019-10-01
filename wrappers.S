@@ -1,10 +1,6 @@
-/*
- * entry.S - Entry point to system mode from user mode
- */
 
 #include <asm.h>
 #include <segment.h>
-
 /**************************************************/
 /**** Save & Restore ******************************/
 /**                                              **/
@@ -51,41 +47,25 @@
       movl %edx, %es
 
 #define RESTORE_ALL \
-      popl %ebx; \
-      popl %ecx; \
-      popl %edx; \
-      popl %esi; \
-      popl %edi; \
-      popl %ebp; \
-      popl %eax; \
+      popl %ebx;\
+      popl %ecx;\
+      popl %edx;\
+      popl %esi;\
+      popl %edi;\
+      popl %ebp;\
+      popl %eax;\
       popl %ds; \
       popl %es; \
       popl %fs; \
       popl %gs
 
-#define EOI \
-      movb $0x20, %al; \
-      outb %al, $0x20 ;
-
-ENTRY(keyboard_handler)
-      SAVE_ALL
-      EOI
-      call keyboard_routine
-      RESTORE_ALL
-      iret
-
-ENTRY(system_call_handler)
-      SAVE_ALL;
-      cmpl $0, %eax;
-      jl error;
-      cmpl $MAX_SYSCALL, %eax;
-      jg error;
-      call *sys_call_table(,%eax,4);
-      jmp fin;
-error:
-      movl $-38, %eax;
-
-fin:  movl %eax, 18(%esp);
-      RESTORE_ALL;
-      iret;
-	
+ENTRY(write)
+      push %ebp
+      movl %esp, %ebp
+      movl 8(%ebp), %ebx
+      movl 12(%ebp), %ecx
+      movl 16(%ebp), %edx
+      movl $4, %eax
+      int $0x80
+      pop %ebp
+      ret

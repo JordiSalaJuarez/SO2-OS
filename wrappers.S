@@ -59,42 +59,47 @@
       popl %fs; \
       popl %gs
 
-#define CHECK_ERROR(end) \
+#define CONCAT_AUX(A, B) A ## B
+#define CONCAT(A, B) CONCAT_AUX(A, B)
+#define LABEL_MACRO(label) CONCAT_AUX(label, __LINE__)
+
+#define UPDATE_ERRNO \
       cmpl $0, %eax; \
-      jge end; \
+      jge 1f; \
       negl %eax; \
       leal errno, %ebx; \
       movl %eax, (%ebx); \
-      movl $-1, %eax;
+      movl $-1, %eax; \
+      1:
 
 ENTRY(write)
-      push %ebp
+      pushl %ebp
       movl %esp, %ebp
 
-      pushl   %ebx
+      pushl %ebx
+
 
       movl 8(%ebp), %ebx
       movl 12(%ebp), %ecx
       movl 16(%ebp), %edx
       movl $4, %eax
       int $0x80
-      CHECK_ERROR(end.write)
-end.write:
+      UPDATE_ERRNO
+
       popl %ebx
+
       popl %ebp
       ret
 
 
 ENTRY(gettime)
-      push %ebp
-      movl %esp, %ebp
+      pushl %ebp
+      movl  %esp, %ebp
 
-      pushl   %ebx
 
       movl $10, %eax
       int $0x80
-      CHECK_ERROR(end.gettime)
-end.gettime:
-      popl %ebx
+      UPDATE_ERRNO
+
       popl %ebp
       ret

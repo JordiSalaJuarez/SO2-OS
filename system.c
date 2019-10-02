@@ -1,5 +1,5 @@
 /*
- * system.c - 
+ * system.c -
  */
 
 #include <segment.h>
@@ -19,6 +19,8 @@ unsigned int *p_sys_size = (unsigned int *) KERNEL_START;
 unsigned int *p_usr_size = (unsigned int *) KERNEL_START+1;
 unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
 
+extern int zeos_ticks;
+
 /************************/
 /** Auxiliar functions **/
 /************************/
@@ -36,7 +38,7 @@ unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
  */
 
 /*
- * This function MUST be 'inline' because it modifies the %esp 
+ * This function MUST be 'inline' because it modifies the %esp
  */
 inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 {
@@ -100,7 +102,7 @@ int __attribute__((__section__(".text.main")))
 
 
   printk("Entering user mode...");
-
+  zeos_ticks = 0;
   enable_int();
   /*
    * We return from a 'theorical' call to a 'call gate' to reduce our privileges
@@ -111,5 +113,3 @@ int __attribute__((__section__(".text.main")))
   /* The execution never arrives to this point */
   return 0;
 }
-
-

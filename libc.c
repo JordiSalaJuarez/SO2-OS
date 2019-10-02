@@ -48,9 +48,23 @@ int strlen(char *a)
 
 
 void perror(void){
-  char msg[] = "\nThe error trown was ";
-  char buffer[64];
-  write(1,  msg,  sizeof(msg));
-  itoa(errno, buffer);
-  write(1,  buffer,  2);
+  char* error_message= "Test";
+  switch(errno) {
+    case ENOSYS:
+      error_message = "System call not defined";
+      break;
+    case EBADF:
+      error_message = "Bad file descriptor identifier";
+      break;
+    case EACCES:
+      error_message = "Wrong permission writing to file";
+      break;
+    case EINVAL:
+      error_message = "Buffer size is equal or less than 0";
+      break;
+    case EBUFFERNULL:
+      error_message = "Buffer address is null";
+      break;
+  }
+  write(1, error_message, strlen(error_message));
 }

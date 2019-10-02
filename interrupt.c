@@ -104,7 +104,7 @@ void keyboard_routine(){
   char is_make = data_key & 0x80;
   char addr = data_key & 0x7f;
   if (is_make)	{
-  	if (addr < sizeof(char_map)/sizeof(char) && char_map[addr] != '\0'){
+  	if (0 <= addr && addr < sizeof(char_map)/sizeof(char) && char_map[addr] != '\0'){
   		printc_xy(0x0, 0x0, char_map[addr]);
   	} else {
   		printc_xy(0x0, 0x0, 'C');

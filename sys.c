@@ -13,6 +13,8 @@
 
 #include <sched.h>
 
+#include <libc.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
@@ -53,7 +55,7 @@ void sys_exit()
 int sys_write(int fd, char *buffer, int size){
   int error;
   if ((error = check_fd(fd, ESCRIPTURA)) < 0)  return error;
-  if ((buffer) == NULL)     	                 return -1;
+  if ((buffer) == NULL)     	                 return -EBUFFERNULL;
   if (size < 0)                     	         return -1;
   char sys_addr[CHUNK_SIZE];
   int written = 0;

@@ -59,13 +59,42 @@
       popl %fs; \
       popl %gs
 
+#define CHECK_ERROR(end) \
+      cmpl $0, %eax; \
+      jge end; \
+      negl %eax; \
+      leal errno, %ebx; \
+      movl %eax, (%ebx); \
+      movl $-1, %eax;
+
 ENTRY(write)
       push %ebp
       movl %esp, %ebp
+
+      pushl   %ebx
+
       movl 8(%ebp), %ebx
       movl 12(%ebp), %ecx
       movl 16(%ebp), %edx
       movl $4, %eax
       int $0x80
-      pop %ebp
+      CHECK_ERROR(end.write)
+end.write:
+      popl %ebx
+      popl %ebp
+      ret
+
+
+ENTRY(gettime)
+      push %ebp
+      movl %esp, %ebp
+
+      pushl   %ebx
+
+      movl $10, %eax
+      int $0x80
+      CHECK_ERROR(end.gettime)
+end.gettime:
+      popl %ebx
+      popl %ebp
       ret

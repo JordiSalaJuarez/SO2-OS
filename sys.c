@@ -16,6 +16,8 @@
 #define LECTURA 0
 #define ESCRIPTURA 1
 
+int zeos_ticks;
+
 int check_fd(int fd, int permissions)
 {
   if (fd!=1) return -9; /*EBADF*/
@@ -38,21 +40,30 @@ int sys_fork()
   int PID=-1;
 
   // creates the child process
-  
+
   return PID;
 }
 
 void sys_exit()
-{  
+{
 }
+
+#define CHUNK_SIZE 64
 
 int sys_write(int fd, char *buffer, int size){
-  if (check_fd(fd, ESCRIPTURA) < 0)  	     return -1;
-  if ((buffer) == NULL)     	             return -2;
-  if (size < 0)                     	     return -3;
-  char sys_addr[size];
-  if (copy_from_user(buffer, sys_addr, size)) return -4;
-
-  return sys_write_console(buffer, size);
+  int error;
+  if ((error = check_fd(fd, ESCRIPTURA)) < 0)  return error;
+  if ((buffer) == NULL)     	                 return -1;
+  if (size < 0)                     	         return -1;
+  char sys_addr[CHUNK_SIZE];
+  int written = 0;
+  for (int i = 0; i < size; i += CHUNK_SIZE){
+      if((error = copy_from_user(buffer+i,sys_addr, min(CHUNK_SIZE, size-i))) < 0) return error;
+      written += sys_write_console(sys_addr, min(CHUNK_SIZE, size-i));
+  }
+  return written;
 }
 
+int sys_gettime(){
+  return zeos_ticks;
+}

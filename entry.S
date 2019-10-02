@@ -50,18 +50,19 @@
       movl %edx, %ds;           \
       movl %edx, %es
 
+
 #define RESTORE_ALL \
-      popl %ebx; \
-      popl %ecx; \
-      popl %edx; \
-      popl %esi; \
-      popl %edi; \
-      popl %ebp; \
-      popl %eax; \
-      popl %ds; \
-      popl %es; \
-      popl %fs; \
-      popl %gs
+      popl    %ebx; \
+      popl    %ecx; \
+      popl    %edx; \
+      popl    %esi; \
+      popl    %edi; \
+      popl    %ebp; \
+      popl    %eax; \
+      popl    %ds; \
+      popl    %es; \
+      popl    %fs; \
+      popl    %gs
 
 #define EOI \
       movb $0x20, %al; \
@@ -74,6 +75,15 @@ ENTRY(keyboard_handler)
       RESTORE_ALL
       iret
 
+
+ENTRY(clock_handler)
+      SAVE_ALL
+      EOI
+      call clock_routine
+      RESTORE_ALL
+      iret
+
+
 ENTRY(system_call_handler)
       SAVE_ALL;
       cmpl $0, %eax;
@@ -85,7 +95,6 @@ ENTRY(system_call_handler)
 error:
       movl $-38, %eax;
 
-fin:  movl %eax, 18(%esp);
+fin:  movl %eax, 24(%esp);
       RESTORE_ALL;
       iret;
-	

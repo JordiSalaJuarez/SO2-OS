@@ -16,4 +16,5 @@ void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL);
 
 void setIdt();
+
 #endif  /* __INTERRUPT_H__ */

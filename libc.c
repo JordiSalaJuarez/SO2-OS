@@ -8,8 +8,7 @@
 
 int errno;
 
-int write (int fd,char *buffer,int size);
-int gettime();
+int write (int fd, char *buffer, int size);
 
 void itoa(int a, char *b)
 {
@@ -46,25 +45,12 @@ int strlen(char *a)
   return i;
 }
 
-
 void perror(void){
-  char* error_message= "Test";
-  switch(errno) {
-    case ENOSYS:
-      error_message = "System call not defined";
-      break;
-    case EBADF:
-      error_message = "Bad file descriptor identifier";
-      break;
-    case EACCES:
-      error_message = "Wrong permission writing to file";
-      break;
-    case EINVAL:
-      error_message = "Buffer size is equal or less than 0";
-      break;
-    case EBUFFERNULL:
-      error_message = "Buffer address is null";
-      break;
-  }
-  write(1, error_message, strlen(error_message));
+	switch (errno) {
+		case EBADF:  write(1, EBADF_msg, sizeof(EBADF_msg)); break;
+		case ENOSYS:  write(1, ENOSYS_msg, sizeof(ENOSYS_msg)); break;
+		case EFAULT: write(1, EFAULT_msg, sizeof(EFAULT_msg)); break;
+		case EINVAL: write(1, EINVAL_msg, sizeof(EINVAL_msg)); break;
+	}
 }
+

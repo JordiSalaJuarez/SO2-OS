@@ -1,7 +1,3 @@
-/*
- * entry.S - Entry point to system mode from user mode
- */
-
 #include <asm.h>
 #include <segment.h>
 
@@ -35,19 +31,51 @@
 /**                                              **/
 /**************************************************/
 
-	#define SAVE_ALL \
-pushl %gs; \
-      pushl %fs; \
-      pushl %es; \
-      pushl %ds; \
-      pushl %eax; \
-      pushl %ebp; \
-      pushl %edi; \
-      pushl %esi; \
-      pushl %edx; \
-      pushl %ecx; \
-      pushl %ebx; \
-      movl $__KERNEL_DS, %edx;    \
-      movl %edx, %ds;           \
-      movl %edx, %es
 
+#define SYSCALL(syscallID) \
+	leal return##syscallID, %eax; \
+	push %eax; \
+	movl $syscallID, %eax; \
+	push %ebp; \
+	movl %esp, %ebp; \
+	sysenter; \
+	return##syscallID: pop %ebp; \
+	addl $4, %esp;
+
+#define UPDATE_ERRNO \
+      cmpl $0, %eax; \
+      jge 1f; \
+      negl %eax; \
+      leal errno, %ebx; \
+      movl %eax, (%ebx); \
+      movl $-1, %eax; \
+      1:
+
+ENTRY(write)
+      pushl %ebp
+      movl %esp, %ebp
+
+      pushl %ebx
+
+      movl 8(%ebp), %ebx
+      movl 12(%ebp), %ecx
+      movl 16(%ebp), %edx
+      SYSCALL(4)
+/**   movl $4, %eax
+      int $0x80**/
+      UPDATE_ERRNO
+
+      popl %ebx
+
+      popl %ebp
+      ret
+
+ENTRY(gettime)
+      pushl %ebp
+      movl %esp, %ebp
+
+      SYSCALL(10)
+      UPDATE_ERRNO
+
+      popl %ebp
+      ret

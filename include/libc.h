@@ -7,6 +7,7 @@
 #define __LIBC_H__
 
 #include <stats.h>
+#include <errno.h>
 
 int write(int fd, char *buffer, int size);
 
@@ -21,5 +22,12 @@ int getpid();
 int fork();
 
 void exit();
+
+static const char EBADF_msg[] = "Bad file descriptor identifier.";
+static const char EFAULT_msg[] = "Buf is outside your accessible address space.";
+static const char EINVAL_msg[] = "Buffer size contains an invalid value.";
+static const char ENOSYS_msg[] = "System call not defined";
+
+void perror(void);
 
 #endif  /* __LIBC_H__ */

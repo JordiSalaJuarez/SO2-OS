@@ -135,7 +135,7 @@ ENTRY(writeMSR)
 ENTRY(task_switch)
       push %ebp
       movl %esp, %ebp
-      pushl %edi
+      pushl %esi
       pushl %edi
       pushl %ebx
       pushl 8(%ebp)

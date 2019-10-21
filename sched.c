@@ -6,17 +6,17 @@
 #include <mm.h>
 #include <io.h>
 
+void writeMsr(int msr, long data);
+
 void task_switch(union task_union *new);
 
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
 
-#if 0
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
   return list_entry( l, struct task_struct, list);
 }
-#endif
 
 extern struct list_head blocked;
 
@@ -57,16 +57,35 @@ void init_idle (void)
 {
 	if(!list_empty(free_queue))
 	{
-		struct list_head *it = list_first(free_queue);
-		list_head_to_task_struct(it)->PID = 0;
-		list_head_to_task_struct(it)->dir_pages_baseAddr = allocate_DIR(list_head_to_task_struct(it));
+		struct list_head *it_aux = list_first(free_queue);
+		struct task_struct * it_ts = list_head_to_task_struct(it_aux);
+		union task_union * it_tu = (union task_union *) it_ts;
+		it_ts->PID = 0;
+		it_ts->dir_pages_baseAddr = allocate_DIR(it_ts);
+		it_tu->stack[KERNEL_STACK_SIZE-1] = cpu_idle;
+		it_tu->stack[KERNEL_STACK_SIZE-2] = 0;
+		it_ts->esp = &it_tu->stack[KERNEL_STACK_SIZE-3];
+		idle_task = it_ts;
+		list_del(it_aux);
 	}
 }
 
 void init_task1(void)
 {
+	if(!list_empty(free_queue))
+	{
+		struct list_head *it_aux = list_first(free_queue);
+		struct task_struct * it_ts = list_head_to_task_struct(it_aux);
+		union task_union * it_tu = (union task_union *) it_ts;
+		it_ts->PID = 1;
+		it_ts->dir_pages_baseAddr = allocate_DIR(it_ts);
+		set_user_pages(it_ts);
+		tss.esp0 = KERNEL_ESP(it_tu);
+		writeMSR(0x175, KERNEL_ESP(it_tu));
+		set_cr3(it_ts->dir_pages_baseAddr);
+		it_ts->esp = &it_tu->stack[KERNEL_STACK_SIZE-3];
+	}
 }
-
 
 void init_sched()
 {
@@ -90,5 +109,8 @@ struct task_struct* current()
 
 void inner_task_switch(union task_union *new)
 {
-
+	tss.esp0 = KERNEL_ESP(new);
+	writeMSR(0x175, KERNEL_ESP(new));
+	set_cr3(new->task.dir_pages_baseAddr);
+	*(new->task.esp) = current()->esp;
 }

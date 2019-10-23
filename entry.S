@@ -149,10 +149,10 @@ ENTRY(task_switch)
       ret
 
 ENTRY(getEBP)
-      mov %ebp, %eax
+      movl %ebp, %eax
       ret
 
 ENTRY(setESP)
-      mov 4(%esp), %esp
-      pop %ebp
+      movl 4(%esp), %esp
+      popl %ebp
       ret

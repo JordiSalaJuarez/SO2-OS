@@ -58,9 +58,9 @@ void cpu_idle(void)
 
 void init_idle (void)
 {
-	if(!list_empty(free_queue))
+	if(!list_empty(&free_queue))
 	{
-		struct list_head *it_aux = list_first(free_queue);
+		struct list_head *it_aux = list_first(&free_queue);
 		struct task_struct * it_ts = list_head_to_task_struct(it_aux);
 		union task_union * it_tu = (union task_union *) it_ts;
 		it_ts->PID = 0;
@@ -75,9 +75,9 @@ void init_idle (void)
 
 void init_task1(void)
 {
-	if(!list_empty(free_queue))
+	if(!list_empty(&free_queue))
 	{
-		struct list_head *it_aux = list_first(free_queue);
+		struct list_head *it_aux = list_first(&free_queue);
 		struct task_struct * it_ts = list_head_to_task_struct(it_aux);
 		union task_union * it_tu = (union task_union *) it_ts;
 		it_ts->PID = 1;
@@ -94,9 +94,9 @@ void init_sched()
 {
 	INIT_LIST_HEAD(&free_queue);
 	for(int i = 0; i < NR_TASKS; i++)
-		list_add( &(task[i].task.list), free_queue);
+		list_add( &(task[i].task.list), &free_queue);
 
-	INIT_LIST_HEAD(ready_queue);
+	INIT_LIST_HEAD(&ready_queue);
 }
 
 struct task_struct* current()

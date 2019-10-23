@@ -14,6 +14,7 @@ int __attribute__ ((__section__(".text.main")))
   //runjp_rank(3, 10);
   //runjp();
 
+
   char b[80];
 
   while(1) {

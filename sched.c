@@ -114,8 +114,7 @@ void inner_task_switch(union task_union *new)
 {
 	tss.esp0 = KERNEL_ESP(new);
 	writeMSR(0x175, KERNEL_ESP(new));
-//	if(current()->dir_pages_baseAddr == new->task.dir_pages_baseAddr)
-		set_cr3(new->task.dir_pages_baseAddr);
+	set_cr3(new->task.dir_pages_baseAddr);
 	current()->esp = getEBP();
 	setESP(new->task.esp);
 	return;

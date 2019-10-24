@@ -72,3 +72,4 @@ int sys_gettime()
 {
 	return zeos_ticks;
 }
+

@@ -65,9 +65,9 @@ void init_idle (void)
 		union task_union * it_tu = (union task_union *) it_ts;
 		it_ts->PID = 0;
 		it_ts->dir_pages_baseAddr = allocate_DIR(it_ts);
-		it_tu->stack[KERNEL_STACK_SIZE-1] = cpu_idle;
-		it_tu->stack[KERNEL_STACK_SIZE-2] = 0;
-		it_ts->esp = &it_tu->stack[KERNEL_STACK_SIZE-3];
+		it_tu->stack[KERNEL_STACK_SIZE-1] = (unsigned long) cpu_idle;
+		it_tu->stack[KERNEL_STACK_SIZE-2] = (unsigned long) 0;
+		it_ts->esp = &it_tu->stack[KERNEL_STACK_SIZE-2];
 		idle_task = it_ts;
 		list_del(it_aux);
 	}
@@ -114,7 +114,8 @@ void inner_task_switch(union task_union *new)
 {
 	tss.esp0 = KERNEL_ESP(new);
 	writeMSR(0x175, KERNEL_ESP(new));
-	set_cr3(new->task.dir_pages_baseAddr);
+//	if(current()->dir_pages_baseAddr == new->task.dir_pages_baseAddr)
+		set_cr3(new->task.dir_pages_baseAddr);
 	current()->esp = getEBP();
 	setESP(new->task.esp);
 	return;

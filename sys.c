@@ -32,6 +32,7 @@ int sys_ni_syscall()
 	return -ENOSYS;
 }
 
+
 int sys_getpid()
 {
 	return current()->PID;
@@ -40,6 +41,24 @@ int sys_getpid()
 int sys_fork()
 {
   int PID=-1;
+  union task_union * tu_child;
+  	if !list_empty(&free_queue) return -1;
+	struct list_head *it_aux = list_first(&free_queue);
+	struct task_struct * it_ts = list_head_to_task_struct(it_aux);
+	tu_child = (union task_union *) it_ts;
+	copy_data(current(),tu_child, KERNEL_STACK_SIZE * sizeof(unsigned long));
+	it_ts->dir_pages_baseAddr = allocate_DIR(it_ts);
+	if(it_ts->dir_pages_baseAddr != current()->dir_pages_baseAddr) set_sr3(it_ts->dir_pages_baseAddr);
+	set_user_pages(it_ts);
+
+	 int pag; 
+	 int new_ph_pag;
+	 page_table_entry * child_PT, parent_PT;
+	 child_PT = get_PT(it_ts);
+	 parent_PT = get_PT(current());
+	 child_PT[PAG_LOG_INIT_CODE+pag].bits.pbase_add = alloc_frame();
+
+}
 
   // creates the child process
 

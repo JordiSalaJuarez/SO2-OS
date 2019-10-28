@@ -80,6 +80,18 @@ ENTRY(gettime)
       popl %ebp
       ret
 
+ENTRY(fork)
+      pushl %ebp
+      movl %esp, %ebp
+
+      SYSCALL(2)
+      UPDATE_ERRNO
+
+      popl %ebp
+      ret
+
+
+
 ENTRY(getpid)
       pushl %ebp
       movl %esp, %ebp

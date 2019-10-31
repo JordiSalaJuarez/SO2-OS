@@ -6,6 +6,10 @@
 #include <mm.h>
 #include <io.h>
 
+
+int MAX_PID = 1;
+int rem_quantum;
+
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
 
@@ -56,7 +60,10 @@ void cpu_idle(void)
 	}
 }
 
-
+void update_sched_data_rr (void){
+	++current()->ticks;
+	--rem_quant;
+}
 
 void init_idle (void)
 {
@@ -75,6 +82,11 @@ void init_idle (void)
 	}
 }
 
+int needs_sched_rr (void){
+	return !list_empty(&ready_queue) && rem_quantum <= 0 ;	
+}
+
+
 void init_task1(void)
 {
 	if(!list_empty(&free_queue))
@@ -84,18 +96,48 @@ void init_task1(void)
 		union task_union * it_tu = (union task_union *) it_ts;
 		it_ts->PID = 1;
 		it_ts->dir_pages_baseAddr = allocate_DIR(it_ts);
-		it_tu->stack[KERNEL_STACK_SIZE-1] = (unsigned long) test_f;
-		it_tu->stack[KERNEL_STACK_SIZE-2] = (unsigned long) 0;
-<<<<<<< Updated upstream
-=======
-		it_ts->esp = &it_tu->stack[KERNEL_STACK_SIZE-2];
->>>>>>> Stashed changes
 		set_user_pages(it_ts);
+
+		it_ts->ticks = 0;
+		it_ts->quantum = 12;
+		it_ts->state = ST_RUN;
+
+		it_ts->esp = &it_tu->stack[KERNEL_STACK_SIZE];
 		tss.esp0 = KERNEL_ESP(it_tu);
 		writeMSR(0x175, KERNEL_ESP(it_tu));
 		set_cr3(it_ts->dir_pages_baseAddr);
 
 	}
+}
+
+void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue){
+	
+	if( t->state != ST_RUN ) list_del(&t->list);
+	
+	if( dst_queue == NULL ){
+		t->state = ST_RUN;
+	}else
+	{
+		list_add_tail(&t->list, dst_queue);	
+		t->state = ST_READY;
+	} 
+}
+
+void sched_next_rr (void){
+	if(!list_empty(&ready_queue)){
+		struct task_struct *ts =  list_head_to_task_struct(list_first(&ready_queue));
+		rem_quantum = ts->quantum;
+		update_process_state_rr(ts, NULL);
+		task_switch((union task_union * )ts);
+	}
+}
+
+
+int get_quantum (struct task_struct *t){
+	return t->quantum;
+}
+void set_quantum (struct task_struct *t, int new_quantum){
+	t->quantum = new_quantum;
 }
 
 void init_sched()

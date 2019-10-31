@@ -40,13 +40,18 @@ int sys_getpid()
 	return current()->PID;
 }
 
+int ret_from_fork(){
+	return 0;
+}
+
+
 int sys_fork()
 {
   // creates the child process
 
 	int PID=-1;
 
-	if (list_empty(&free_queue)) return -1;
+	if (list_empty(&free_queue)) return -EAGAIN;
 	struct list_head *child_lh = list_first(&free_queue);
 	struct task_struct *child_ts = list_head_to_task_struct(child_lh);
 	union task_union *child_tu = (union task_union *) child_ts;
@@ -89,6 +94,9 @@ int sys_fork()
 	child_tu->stack[index] = (int) ret_from_fork;
 	child_tu->stack[index-1] = 0;
 	child_ts->esp= &child_tu->stack[index-1];
+	child_ts->ticks = 0;
+	child_ts->quatum = 12;
+	child_ts->state = ST_READY;
 
 	list_add_tail(child_lh, &ready_queue); 	
 
@@ -97,7 +105,20 @@ int sys_fork()
 }
 
 void sys_exit()
-{
+{	
+	page_table_entry * pt = get_PT(current());
+	for(int page = 0; page< NUM_PAG_DATA; page++){
+		free_frame(pt[PAG_LOG_INIT_DATA+page].bits.pbase_addr);
+		del_ss_pag(pt, PAG_LOG_INIT_DATA+page);
+	}
+	update_process_state_rr(current(),&free_queue);
+	if(!list_empty(&ready_queue)){
+		struct task_struct * ts = list_head_to_task_struct(list_first(&ready_queue));
+		update_process_state_rr(ts, NULL);
+		task_switch((union task_union*)ts);
+	}else{
+		task_switch((union task_union*) &idle_task);
+	}	
 }
 
 #define CHUNK_SIZE 64

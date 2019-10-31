@@ -90,6 +90,17 @@ ENTRY(fork)
       popl %ebp
       ret
 
+ENTRY(exit)
+      pushl %ebp
+      movl %esp, %ebp
+
+      SYSCALL(1)
+      UPDATE_ERRNO
+
+      popl %ebp
+      ret
+
+
 
 
 ENTRY(getpid)

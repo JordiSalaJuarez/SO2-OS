@@ -56,15 +56,6 @@ void cpu_idle(void)
 	}
 }
 
-void test_f(void)
-{
-	__asm__ __volatile__("sti": : :"memory");
-
-	while(1)
-	{
-	;
-	}
-}
 
 
 void init_idle (void)
@@ -95,11 +86,15 @@ void init_task1(void)
 		it_ts->dir_pages_baseAddr = allocate_DIR(it_ts);
 		it_tu->stack[KERNEL_STACK_SIZE-1] = (unsigned long) test_f;
 		it_tu->stack[KERNEL_STACK_SIZE-2] = (unsigned long) 0;
+<<<<<<< Updated upstream
+=======
+		it_ts->esp = &it_tu->stack[KERNEL_STACK_SIZE-2];
+>>>>>>> Stashed changes
 		set_user_pages(it_ts);
 		tss.esp0 = KERNEL_ESP(it_tu);
 		writeMSR(0x175, KERNEL_ESP(it_tu));
 		set_cr3(it_ts->dir_pages_baseAddr);
-		it_ts->esp = &it_tu->stack[KERNEL_STACK_SIZE-3];
+
 	}
 }
 

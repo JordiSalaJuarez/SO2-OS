@@ -62,7 +62,7 @@ void cpu_idle(void)
 
 void update_sched_data_rr (void){
 	++current()->ticks;
-	--rem_quant;
+	--rem_quantum;
 }
 
 void init_idle (void)

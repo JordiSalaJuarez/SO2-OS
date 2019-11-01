@@ -23,7 +23,8 @@ struct task_struct {
   page_table_entry * dir_pages_baseAddr;
   struct list_head list;
   int ticks;
-  state_t state;
+  int quantum;
+  enum state_t state;
   unsigned long * esp;
 };
 

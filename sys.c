@@ -56,7 +56,7 @@ int sys_fork()
 	struct task_struct *child_ts = list_head_to_task_struct(child_lh);
 	union task_union *child_tu = (union task_union *) child_ts;
 	list_del(child_lh);
-	copy_data(current(), child_lh, (int) sizeof(union task_union));
+	copy_data(current(), child_ts, (int) sizeof(union task_union));
 
 	allocate_DIR(child_ts);
 
@@ -90,12 +90,12 @@ int sys_fork()
 	set_cr3(get_DIR(current()));
 	PID = MAX_PID++;
 	child_ts->PID = PID;
-	int index  = (getEbp() - (int) current())/sizeof(int);
+	int index  = (getEBP() - (int) current())/sizeof(int);
 	child_tu->stack[index] = (int) ret_from_fork;
 	child_tu->stack[index-1] = 0;
 	child_ts->esp= &child_tu->stack[index-1];
 	child_ts->ticks = 0;
-	child_ts->quatum = 12;
+	child_ts->quantum = 12;
 	child_ts->state = ST_READY;
 
 	list_add_tail(child_lh, &ready_queue); 	

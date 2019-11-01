@@ -89,11 +89,18 @@ int __attribute__((__section__(".text.main")))
 
 //  monoprocess_init_addr_space(); /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
 
-  /* Initialize Scheduling */
+   /* Initialize Scheduling */
   init_sched();
+
+  /* Initialize the free process queue */
+  init_free_queue();
+
+  /* Initialize the ready process queue */
+  init_ready_queue();
 
   /* Initialize idle task  data */
   init_idle();
+
   /* Initialize task 1 data */
   init_task1();
 
@@ -105,6 +112,7 @@ int __attribute__((__section__(".text.main")))
 
   zeos_ticks = 0;
 
+  zeos_init_auxjp();
   enable_int();
   /*
    * We return from a 'theorical' call to a 'call gate' to reduce our privileges

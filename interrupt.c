@@ -115,7 +115,6 @@ void keyboard_routine()
 		if(sizeof(char_map)/sizeof(char) <= data || toPrint == '\0') toPrint = 'C';
 		printc_xy(0x0,0x0,toPrint);
 	}
-
 }
 
 void clock_routine()
@@ -124,7 +123,6 @@ void clock_routine()
 	zeos_ticks++;
   update_sched_data_rr();
   if(needs_sched_rr()){
-    update_process_state_rr(current(), &ready_queue);
 	  sched_next_rr();
   }
 }

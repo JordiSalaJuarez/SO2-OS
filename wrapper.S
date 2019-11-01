@@ -90,6 +90,22 @@ ENTRY(fork)
       popl %ebp
       ret
 
+ENTRY(get_stats)
+	push %ebp
+	movl %esp, %ebp
+	push %ebx
+	movl 8(%ebp), %ebx
+	movl 12(%ebp), %ecx
+	
+      SYSCALL(35)
+	UPDATE_ERRNO
+
+	pop %ebx
+	pop %ebp
+	ret
+
+
+
 ENTRY(exit)
       pushl %ebp
       movl %esp, %ebp

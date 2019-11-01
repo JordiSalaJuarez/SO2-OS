@@ -72,14 +72,18 @@
 ENTRY(keyboard_handler)
       SAVE_ALL
       EOI
+      call update_entry_system;
       call keyboard_routine
+      call update_leave_system;
       RESTORE_ALL
       iret
 
 ENTRY(clock_handler)
       SAVE_ALL
       EOI
+      call update_entry_system;
       call clock_routine
+      call update_leave_system;
       RESTORE_ALL
       iret
 
@@ -106,6 +110,9 @@ ENTRY(syscall_handler_sysenter)
       push $__USER_CS
       push 4(%EBP)        	// User return address
       SAVE_ALL
+      push %eax
+      call update_entry_system
+      pop %eax
       cmpl $0, %EAX
       jl sysenter_err
       cmpl $MAX_SYSCALL, %EAX
@@ -116,6 +123,7 @@ sysenter_err:
       movl $-38, %EAX		//ENOSYS
 sysenter_fin:
       movl %EAX, 0x18(%ESP)
+      call update_leave_system;
       RESTORE_ALL
       movl (%ESP), %EDX		// Return address
       movl 12(%ESP), %ECX	// User stack address
@@ -132,8 +140,24 @@ ENTRY(writeMSR)
       pop %ebp
       ret
 
+
+ENTRY(writeMsr)
+	push %ebp
+	movl %esp, %ebp
+	movl 8(%ebp), %ecx
+	movl 12(%ebp), %eax
+	movl $0, %edx
+	wrmsr
+	pop %ebp
+	ret
+
+
+
+
+
+
 ENTRY(task_switch)
-      push %ebp
+      pushl %ebp
       movl %esp, %ebp
       pushl %esi
       pushl %edi
@@ -156,3 +180,12 @@ ENTRY(setESP)
       movl 4(%esp), %esp
       popl %ebp
       ret
+
+ENTRY(setEsp)
+	movl 4(%esp), %esp
+	popl %ebp;
+	ret;
+
+ENTRY(getEbp)
+	movl %ebp, %eax
+	ret;

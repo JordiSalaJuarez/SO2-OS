@@ -100,3 +100,77 @@ ENTRY(get_stats)
 	popl %ebp
 	ret
 
+
+
+/* int clone(void (* function)(void), void *stack) */
+ENTRY(clone)
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $19, %eax
+	movl 0x8(%ebp), %ebx;	//function
+	movl 0xC(%ebp), %ecx;	//stack
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+/* int sem_init (int n_sem, unsigned int value) */
+ENTRY(sem_init) 
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $21, %eax
+	movl 0x8(%ebp), %ebx;	//n_sem
+	movl 0xC(%ebp), %ecx;	//value
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+/* int sem_wait (int n_sem) */
+ENTRY(sem_wait) 
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $22, %eax
+	movl 0x8(%ebp), %ebx;	//n_sem
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+
+/* int sem_signal (int n_sem) */
+ENTRY(sem_signal) 
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $23, %eax
+	movl 0x8(%ebp), %ebx;	//n_sem
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+/* int sem_destroy (int n_sem) */
+ENTRY(sem_destroy) 
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $24, %eax
+	movl 0x8(%ebp), %ebx;	//n_sem
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -> 
+	popl %ebp
+	ret

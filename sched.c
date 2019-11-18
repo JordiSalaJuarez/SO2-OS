@@ -20,6 +20,8 @@ union task_union protected_tasks[NR_TASKS+2]
 
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
 
+struct sem sems[NR_SEMS];
+
 #if 0
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
@@ -33,6 +35,8 @@ extern struct list_head blocked;
 struct list_head freequeue;
 // Ready queue
 struct list_head readyqueue;
+// Directories Counters
+extern int dir_pages_n_refs[NR_TASKS];
 
 void init_stats(struct stats *s)
 {
@@ -58,16 +62,36 @@ page_table_entry * get_PT (struct task_struct *t)
 }
 
 
-int allocate_DIR(struct task_struct *t) 
-{
-	int pos;
-
-	pos = ((int)t-(int)task)/sizeof(union task_union);
-
-	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
-
-	return 1;
+int deallocate_DIR(struct task_struct *t){
+  int pos;
+  pos = ((int)t->dir_pages_baseAddr-(int)dir_pages)/(sizeof(page_table_entry)*TOTAL_PAGES);
+  --dir_pages_n_refs[pos];
+  return 1;
 }
+
+int allocate_DIR(struct task_struct *t)
+{
+
+  int pos;
+
+	// pos = ((int)t-(int)task)/sizeof(union task_union);
+
+	// if(dir_pages_n_refs[pos] == 0) t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
+  // ++dir_pages_n_refs[pos];
+	// return 1;
+
+  for(int i = 0 ; i < NR_TASKS; ++i){
+    if(dir_pages_n_refs[i] == 0){
+      t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[i]; 
+      ++dir_pages_n_refs[i];
+      return 1;
+    }
+  }
+  return -1;
+}
+
+
+
 
 void cpu_idle(void)
 {
@@ -170,7 +194,7 @@ void init_idle (void)
 
   init_stats(&c->p_stats);
 
-  allocate_DIR(c);
+  // allocate_DIR(c); 
 
   uc->stack[KERNEL_STACK_SIZE-1]=(unsigned long)&cpu_idle; /* Return address */
   uc->stack[KERNEL_STACK_SIZE-2]=0; /* register ebp */

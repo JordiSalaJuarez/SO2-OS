@@ -8,7 +8,6 @@
 #include <io.h>
 
 #include <mm.h>
-
 #include <mm_address.h>
 
 #include <sched.h>
@@ -19,6 +18,10 @@
 
 #define LECTURA 0
 #define ESCRIPTURA 1
+
+extern int dir_pages_n_refs[NR_TASKS];
+extern struct sem sems[NR_SEMS];
+
 
 void * get_ebp();
 
@@ -55,6 +58,82 @@ int ret_from_fork()
 {
   return 0;
 }
+
+
+
+int sys_clone(void (* function)(void), void *stack)
+{
+  struct list_head *lhcurrent = NULL;
+  union task_union *uchild;
+  
+  if (!access_ok(VERIFY_WRITE, stack, sizeof(void*)))   return -EFAULT;
+	if (!access_ok(VERIFY_READ, function, sizeof(void*))) return -EFAULT;
+
+  /* Any free task_struct? */
+  if (list_empty(&freequeue)) return -ENOMEM;
+
+  lhcurrent=list_first(&freequeue);
+  
+  list_del(lhcurrent);
+  
+  uchild=(union task_union*)list_head_to_task_struct(lhcurrent);
+  
+  /* Copy the parent's task struct to child's */
+  copy_data(current(), uchild, sizeof(union task_union));
+  
+  /* new pages dir */
+  int pos = ((int) uchild->task.dir_pages_baseAddr - (int) dir_pages) /(sizeof(page_table_entry)*TOTAL_PAGES);
+	dir_pages_n_refs[pos]++; 
+
+  uchild->task.PID=++global_PID;
+  uchild->task.state=ST_READY;
+
+  int register_ebp;		/* frame pointer */
+  /* Map Parent's ebp to child's stack */
+  register_ebp = (int) get_ebp();
+  register_ebp=(register_ebp - (int)current()) + (int)(uchild);
+
+  uchild->task.register_esp=register_ebp + sizeof(DWord);
+
+  DWord temp_ebp=*(DWord*)register_ebp;
+  /* Prepare child stack for context switch */
+  uchild->task.register_esp-=sizeof(DWord);
+  *(DWord*)(uchild->task.register_esp)=(DWord)&ret_from_fork;
+  uchild->task.register_esp-=sizeof(DWord);
+  *(DWord*)(uchild->task.register_esp)=temp_ebp;
+
+	uchild->stack[KERNEL_STACK_SIZE-2]=(int)stack;
+	uchild->stack[KERNEL_STACK_SIZE-5]=(int)function;
+
+
+  /* Set stats to 0 */
+  init_stats(&(uchild->task.p_stats));
+
+  /* Queue child process into readyqueue */
+  uchild->task.state=ST_READY;
+  list_add_tail(&(uchild->task.list), &readyqueue);
+  
+  return uchild->task.PID;
+}
+
+
+int sys_sem_init(int n_sem, unsigned int value){
+  return 0;
+}
+
+int sys_sem_wait(int n_sem){
+  return 0;
+}
+
+int sys_sem_signal(int n_sem){
+  return 1;
+}
+
+int sys_sem_destroy(int n_sem){
+	return 1;
+}
+
+
 
 int sys_fork(void)
 {
@@ -140,11 +219,12 @@ int sys_fork(void)
   uchild->task.register_esp-=sizeof(DWord);
   *(DWord*)(uchild->task.register_esp)=temp_ebp;
 
+  // int index  = ((int) get_ebp() - (int) current())/sizeof(int);
+  // uchild->stack[index] =(int) ret_from_fork;
+
+
   /* Set stats to 0 */
   init_stats(&(uchild->task.p_stats));
-
-  /* Set child same quantum as father*/
-  set_quantum(uchild, get_quantum(current()));
 
   /* Queue child process into readyqueue */
   uchild->task.state=ST_READY;
@@ -152,6 +232,7 @@ int sys_fork(void)
   
   return uchild->task.PID;
 }
+
 
 #define TAM_BUFFER 512
 
@@ -196,13 +277,16 @@ void sys_exit()
 
   page_table_entry *process_PT = get_PT(current());
 
+  deallocate_DIR(current());
   // Deallocate all the propietary physical pages
-  for (i=0; i<NUM_PAG_DATA; i++)
-  {
-    free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
-    del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
+  int pos = ((int)current()->dir_pages_baseAddr-(int)dir_pages)/(sizeof(page_table_entry)*TOTAL_PAGES);
+  if (dir_pages_n_refs[pos] == 0){
+    for (i=0; i<NUM_PAG_DATA; i++)
+    {
+      free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
+      del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
+    }
   }
-  
   /* Free task_struct */
   list_add_tail(&(current()->list), &freequeue);
   

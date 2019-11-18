@@ -25,6 +25,9 @@ page_table_entry dir_pages[NR_TASKS][TOTAL_PAGES]
 page_table_entry pagusr_table[NR_TASKS][TOTAL_PAGES]
   __attribute__((__section__(".data.task")));
 
+
+int dir_pages_n_refs[NR_TASKS];
+
 /* TSS */
 TSS         tss; 
 

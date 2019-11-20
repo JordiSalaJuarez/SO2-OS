@@ -15,12 +15,15 @@
 #include <p_stats.h>
 
 #include <errno.h>
+#include <dict.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
 
 extern int dir_pages_n_refs[NR_TASKS];
 extern struct sem sems[NR_SEMS];
+extern dict *dict_sems;
+extern struct list_head free_sems;
 
 
 void * get_ebp();
@@ -59,10 +62,9 @@ int ret_from_fork()
   return 0;
 }
 
-
-
 int sys_clone(void (* function)(void), void *stack)
 {
+
   struct list_head *lhcurrent = NULL;
   union task_union *uchild;
   
@@ -81,9 +83,8 @@ int sys_clone(void (* function)(void), void *stack)
   /* Copy the parent's task struct to child's */
   copy_data(current(), uchild, sizeof(union task_union));
   
-  /* new pages dir */
-  int pos = ((int) uchild->task.dir_pages_baseAddr - (int) dir_pages) /(sizeof(page_table_entry)*TOTAL_PAGES);
-	dir_pages_n_refs[pos]++; 
+  /* indcrease number of references on directory */
+  dir_pages_n_refs[get_DIR_index((struct task_struct *)uchild)]++; 
 
   uchild->task.PID=++global_PID;
   uchild->task.state=ST_READY;
@@ -118,19 +119,59 @@ int sys_clone(void (* function)(void), void *stack)
 
 
 int sys_sem_init(int n_sem, unsigned int value){
+  if(contains(dict_sems, n_sem))return -EBUSY;
+  struct list_head *new = list_first(&free_sems);
+  list_del(new);
+  INIT_LIST_HEAD(new);
+  struct sem *s = (struct sem *) new;
+  s->owner = current()->PID;
+  s->counter = value;
+  set_item(dict_sems, n_sem, s);
   return 0;
+
 }
 
 int sys_sem_wait(int n_sem){
-  return 0;
+  if(!contains(dict_sems, n_sem))return -EINVAL;
+  struct sem *s = get_item(dict_sems, n_sem);
+  if(s->counter <= 0){
+    update_process_state_rr(current(), &(s->q_blocked));
+    sched_next_rr();
+    return current()->sem_destroyed? -1: 0;
+  }else{
+    --s->counter;
+  }
 }
 
 int sys_sem_signal(int n_sem){
+  if(!contains(dict_sems, n_sem))return -EINVAL;
+  struct sem *s = get_item(dict_sems, n_sem);
+  if(!list_empty(&s->q_blocked)){
+    update_process_state_rr(list_head_to_task_struct(list_first(&(s->q_blocked))), &readyqueue);
+  }else{
+    ++s->counter;
+  }
   return 1;
 }
 
 int sys_sem_destroy(int n_sem){
-	return 1;
+  if(!contains(dict_sems, n_sem))return -EINVAL;
+  struct sem *s = get_item(dict_sems, n_sem);
+  if (s->owner != current()->PID) return -1;
+
+  del_item(dict_sems, n_sem);
+  if(list_empty(&(s->q_blocked))){
+    list_add_tail(s, &free_sems);
+    return 1;
+  }else{
+    while(!list_empty(&(s->q_blocked))){
+      struct task_struct *ts = list_head_to_task_struct(list_first(&s->q_blocked));
+      ts->sem_destroyed = -1;
+      update_process_state_rr(ts, &readyqueue);
+    }
+    list_add_tail(s, &free_sems);
+    return -1;
+  }    
 }
 
 
@@ -275,12 +316,23 @@ void sys_exit()
 {  
   int i;
 
+  struct list_head *begin = &(dict_sems->info.root);
+  struct list_head *lh = begin->next;
+  while(lh != begin){
+    dict_item *i = (dict_item *) lh;
+    struct sem *s = (struct sem *) i->value;
+    lh = lh->next;
+    if(s->owner == current()->PID){
+      sys_sem_destroy(i->key);
+    }
+  }
+
   page_table_entry *process_PT = get_PT(current());
 
-  deallocate_DIR(current());
   // Deallocate all the propietary physical pages
-  int pos = ((int)current()->dir_pages_baseAddr-(int)dir_pages)/(sizeof(page_table_entry)*TOTAL_PAGES);
-  if (dir_pages_n_refs[pos] == 0){
+  int index = get_DIR_index(current());
+  --dir_pages_n_refs[index];
+  if (dir_pages_n_refs[index] == 0){
     for (i=0; i<NUM_PAG_DATA; i++)
     {
       free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
@@ -312,7 +364,7 @@ int sys_get_stats(int pid, struct stats *st)
   if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -EFAULT; 
   
   if (pid<0) return -EINVAL;
-  for (i=0; i<NR_TASKS; i++)
+  for (i=0; i < NR_TASKS; i++)
   {
     if (task[i].task.PID==pid)
     {

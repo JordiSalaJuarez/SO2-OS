@@ -1,6 +1,7 @@
 #include <libc.h>
 
 
+#if 0
 
 int pid;
 
@@ -19,13 +20,11 @@ int fib(int i){
 void my_func(void){
   int x = fib(7);
   itoa(x,buff);
-  xx = 42;
-  write(1, buff, sizeof(buff));
-  
+  write(1, buff, sizeof(buff)); 
   exit();
 }
 
-
+#endif
 
 int __attribute__ ((__section__(".text.main")))
   main(void)
@@ -33,13 +32,15 @@ int __attribute__ ((__section__(".text.main")))
     /* Next line, tries to move value 0 to CR3 register. This register is a privileged one, and so it will raise an exception */
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
-  // runjp_rank(0,50);
-  // while(1);
-    int x = fib(7);
+  #if 0
+  int x = fib(7);
   itoa(x,buff);
   write(1, buff, sizeof(buff));
   clone(my_func, &stack[4096]);
-  while(xx==666){};
-  write(1,"ok", 2);
+  while(1);
+  #endif
+  
+  runjp();
+  //runjp_rank(12, 40);
   while(1);
 }

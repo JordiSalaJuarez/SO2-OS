@@ -25,13 +25,14 @@ struct task_struct {
   enum state_t state;		/* State of the process */
   int total_quantum;		/* Total quantum of the process */
   struct stats p_stats;		/* Process stats */
-  int sem_wait_ret;
+  int sem_destroyed;
 };
 
 struct sem {
+  struct list_head q_blocked;
 	int owner;
-	int value;
-	struct list_head queue;
+	int counter;
+  int destroyed;
 };
 
 
@@ -51,6 +52,8 @@ extern struct task_struct *idle_task;
 
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
+
+int get_DIR_index(struct task_struct *t);
 
 /* Inicialitza les dades del proces inicial */
 void init_task1(void);

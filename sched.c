@@ -10,6 +10,7 @@
 #include <io.h>
 #include <utils.h>
 #include <p_stats.h>
+#include <dict.h>
 
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
@@ -21,6 +22,9 @@ union task_union protected_tasks[NR_TASKS+2]
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
 
 struct sem sems[NR_SEMS];
+struct list_head used_sems;
+struct list_head free_sems;
+dict *dict_sems;
 
 #if 0
 struct task_struct *list_head_to_task_struct(struct list_head *l)
@@ -61,25 +65,13 @@ page_table_entry * get_PT (struct task_struct *t)
 	return (page_table_entry *)(((unsigned int)(t->dir_pages_baseAddr->bits.pbase_addr))<<12);
 }
 
-
-int deallocate_DIR(struct task_struct *t){
-  int pos;
-  pos = ((int)t->dir_pages_baseAddr-(int)dir_pages)/(sizeof(page_table_entry)*TOTAL_PAGES);
-  --dir_pages_n_refs[pos];
-  return 1;
+int get_DIR_index(struct task_struct *t){
+  return ((int)t->dir_pages_baseAddr-(int)dir_pages)/(sizeof(page_table_entry)*TOTAL_PAGES);
 }
+
 
 int allocate_DIR(struct task_struct *t)
 {
-
-  int pos;
-
-	// pos = ((int)t-(int)task)/sizeof(union task_union);
-
-	// if(dir_pages_n_refs[pos] == 0) t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
-  // ++dir_pages_n_refs[pos];
-	// return 1;
-
   for(int i = 0 ; i < NR_TASKS; ++i){
     if(dir_pages_n_refs[i] == 0){
       t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[i]; 
@@ -91,6 +83,14 @@ int allocate_DIR(struct task_struct *t)
 }
 
 
+void init_sems(){
+  dict_sems = new_dict();
+  INIT_LIST_HEAD(&used_sems);
+  INIT_LIST_HEAD(&free_sems);
+  for(int i = 0; i < NR_SEMS; ++i){
+    list_add_tail(&(sems[i].q_blocked), &free_sems);
+  }
+}
 
 
 void cpu_idle(void)
@@ -137,9 +137,10 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue)
   if (dst_queue!=NULL)
   {
     list_add_tail(&(t->list), dst_queue);
-    if (dst_queue!=&readyqueue) t->state=ST_BLOCKED;
-    else
-    {
+    if (dst_queue!=&readyqueue){
+      update_stats(&(t->p_stats.system_ticks), &(t->p_stats.elapsed_total_ticks));
+      t->state=ST_BLOCKED;
+    }else{
       update_stats(&(t->p_stats.system_ticks), &(t->p_stats.elapsed_total_ticks));
       t->state=ST_READY;
     }
@@ -246,6 +247,16 @@ void init_freequeue()
     list_add_tail(&(task[i].task.list), &freequeue);
   }
 }
+
+void init_dict(){
+  INIT_LIST_HEAD(&used_items);
+  INIT_LIST_HEAD(&free_items);
+  for (int i = 0; i < N_ITEMS; i++){
+    list_add_tail(&(pull_dict[i].info.root), &free_items);
+    pull_dict[i].info.len = -1;
+  }
+}
+
 
 void init_sched()
 {

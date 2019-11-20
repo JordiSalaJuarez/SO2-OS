@@ -88,7 +88,7 @@ int sys_clone(void (* function)(void), void *stack)
 
   uchild->task.PID=++global_PID;
   uchild->task.state=ST_READY;
-
+  uchild->task.sem_destroyed=0;
   int register_ebp;		/* frame pointer */
   /* Map Parent's ebp to child's stack */
   register_ebp = (int) get_ebp();
@@ -160,18 +160,15 @@ int sys_sem_destroy(int n_sem){
   if (s->owner != current()->PID) return -1;
 
   del_item(dict_sems, n_sem);
-  if(list_empty(&(s->q_blocked))){
-    list_add_tail(s, &free_sems);
-    return 1;
-  }else{
-    while(!list_empty(&(s->q_blocked))){
-      struct task_struct *ts = list_head_to_task_struct(list_first(&s->q_blocked));
-      ts->sem_destroyed = -1;
-      update_process_state_rr(ts, &readyqueue);
-    }
-    list_add_tail(s, &free_sems);
-    return -1;
-  }    
+
+  while(!list_empty(&(s->q_blocked))){
+    struct task_struct *ts = list_head_to_task_struct(list_first(&s->q_blocked));
+    ts->sem_destroyed = 1;
+    update_process_state_rr(ts, &readyqueue);
+  }
+  list_add_tail(s, &free_sems);
+  
+  return 1;
 }
 
 
@@ -245,7 +242,7 @@ int sys_fork(void)
 
   uchild->task.PID=++global_PID;
   uchild->task.state=ST_READY;
-
+  uchild->task.sem_destroyed=0;
   int register_ebp;		/* frame pointer */
   /* Map Parent's ebp to child's stack */
   register_ebp = (int) get_ebp();

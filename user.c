@@ -41,6 +41,5 @@ int __attribute__ ((__section__(".text.main")))
   #endif
   
   runjp();
-  //runjp_rank(12, 40);
   while(1);
 }

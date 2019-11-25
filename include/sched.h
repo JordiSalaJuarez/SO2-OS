@@ -26,6 +26,7 @@ struct task_struct {
   int total_quantum;		/* Total quantum of the process */
   struct stats p_stats;		/* Process stats */
   int sem_destroyed;
+  int len_chars_read; /* Number of chars to read from keyboard */
 };
 
 struct sem {
@@ -52,6 +53,7 @@ extern struct task_struct *idle_task;
 
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
+extern struct list_head keyboard_queue;
 
 int get_DIR_index(struct task_struct *t);
 

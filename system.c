@@ -11,6 +11,7 @@
 #include <mm.h>
 #include <io.h>
 #include <utils.h>
+#include <circular_buffer.h>
 
 //#include <zeos_mm.h> /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
 
@@ -100,6 +101,8 @@ int __attribute__((__section__(".text.main")))
   init_dict();
   /* Initialize sems */
   init_sems();
+  /* Initialize c_buff */
+  init_c_buff();
   /* Move user code/data now (after the page table initialization) */
   copy_data((void *) KERNEL_START + *p_sys_size, usr_main, *p_usr_size);
 

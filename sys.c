@@ -89,6 +89,7 @@ int sys_clone(void (* function)(void), void *stack)
   uchild->task.PID=++global_PID;
   uchild->task.state=ST_READY;
   uchild->task.sem_destroyed=0;
+  uchild->task.len_chars_read=0;
   int register_ebp;		/* frame pointer */
   /* Map Parent's ebp to child's stack */
   register_ebp = (int) get_ebp();
@@ -140,6 +141,7 @@ int sys_sem_wait(int n_sem){
     return current()->sem_destroyed? -1: 0;
   }else{
     --s->counter;
+    return 0;
   }
 }
 
@@ -243,6 +245,7 @@ int sys_fork(void)
   uchild->task.PID=++global_PID;
   uchild->task.state=ST_READY;
   uchild->task.sem_destroyed=0;
+  uchild->task.len_chars_read=0;
   int register_ebp;		/* frame pointer */
   /* Map Parent's ebp to child's stack */
   register_ebp = (int) get_ebp();

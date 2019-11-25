@@ -24,6 +24,10 @@ union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TAS
 struct sem sems[NR_SEMS];
 struct list_head used_sems;
 struct list_head free_sems;
+struct list_head keyboard_queue;
+
+
+
 dict *dict_sems;
 
 #if 0
@@ -194,6 +198,7 @@ void init_idle (void)
   c->total_quantum=DEFAULT_QUANTUM;
 
   c->sem_destroyed=0;
+  c->len_chars_read=0;
 
   init_stats(&c->p_stats);
 
@@ -223,6 +228,7 @@ void init_task1(void)
   c->state=ST_RUN;
 
   c->sem_destroyed = 0;
+  c->len_chars_read = 0;
 
   remaining_quantum=c->total_quantum;
 
@@ -266,6 +272,7 @@ void init_sched()
 {
   init_freequeue();
   INIT_LIST_HEAD(&readyqueue);
+  INIT_LIST_HEAD(&keyboard_queue);
 }
 
 struct task_struct* current()

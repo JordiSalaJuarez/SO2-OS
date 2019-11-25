@@ -13,7 +13,7 @@ typedef struct{
     int len;
     /* int (* hash_fun)(void * key); // potser m'he semat una mica */
     /* int (* eq_fun)(void * key_a, void * key_b) */
-}dict_info;
+} dict_info;
 
 // len(dict_info) <= len(dict_item)
 

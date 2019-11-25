@@ -41,11 +41,32 @@ void clock_routine()
   schedule();
 }
 
+
+pcb->ebp[-2]
+
+
 void keyboard_routine()
 {
   unsigned char c = inb(0x60);
   
-  if (c&0x80) printc_xy(0, 0, char_map[c&0x7f]);
+  if (c&0x80){
+    append_c_buff(char_map[c&0x7f]);
+    if(!list_empty(&keyboard_queue)){
+      struct task_struct *ts = list_head_to_task_struct(list_first(&keyboard_queue));
+      if(ts->len_chars_read <=  len_c_buffer || len_c_buffer == N_ITEMS_C_BUFF){
+        update_process_state_rr(ts, NULL);
+        if(current() != idle_task)update_process_state_rr(current(), &readyqueue);
+        
+        remaining_quantum=get_quantum(ts);
+        update_stats(&(current()->p_stats.system_ticks), &(current()->p_stats.elapsed_total_ticks));
+        update_stats(&(ts->p_stats.ready_ticks), &(ts->p_stats.elapsed_total_ticks));
+        ts->p_stats.total_trans++;
+
+        task_switch((union task_union*)ts);
+      }
+    }
+    printc_xy(0, 0, char_map[c&0x7f]);
+  }
 }
 
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)

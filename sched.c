@@ -204,11 +204,15 @@ void init_idle (void)
 
   // allocate_DIR(c); 
 
+
   uc->stack[KERNEL_STACK_SIZE-1]=(unsigned long)&cpu_idle; /* Return address */
   uc->stack[KERNEL_STACK_SIZE-2]=0; /* register ebp */
 
   c->register_esp=(int)&(uc->stack[KERNEL_STACK_SIZE-2]); /* top of the stack */
-
+ 
+  c->heap_start = tss.esp0 + PAGE_SIZE * 10;
+  c->heap_end = tss.esp0 + PAGE_SIZE * 10;
+ 
   idle_task=c;
 }
 
@@ -229,7 +233,7 @@ void init_task1(void)
 
   c->sem_destroyed = 0;
   c->len_chars_read = 0;
-
+  
   remaining_quantum=c->total_quantum;
 
   init_stats(&c->p_stats);
@@ -241,6 +245,8 @@ void init_task1(void)
   tss.esp0=(DWord)&(uc->stack[KERNEL_STACK_SIZE]);
   setMSR(0x175, 0, (unsigned long)&(uc->stack[KERNEL_STACK_SIZE]));
 
+  c->heap_start = (int)task_struct + (TOTAL_PAGES-1) * PAGE_SIZE;
+  c->heap_end = c->heap_start;
   set_cr3(c->dir_pages_baseAddr);
 }
 

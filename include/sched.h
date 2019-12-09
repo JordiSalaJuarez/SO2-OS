@@ -27,6 +27,8 @@ struct task_struct {
   struct stats p_stats;		/* Process stats */
   int sem_destroyed;
   int len_chars_read; /* Number of chars to read from keyboard */
+  void * heap_start;
+  void * heap_end;
 };
 
 struct sem {

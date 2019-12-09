@@ -30,9 +30,10 @@ void * get_ebp();
 
 int check_fd(int fd, int permissions)
 {
-  if (fd!=1) return -EBADF; 
-  if (permissions!=ESCRIPTURA) return -EACCES; 
-  return 0;
+  if( fd != 0 && fd != 1) return -EBADF;  
+  if (fd == 1 && permissions==ESCRIPTURA) return 0;
+  if ( fd == 0 && permissions==LECTURA)return 0;
+  return -EBADF;
 }
 
 void user_to_system(void)
@@ -54,6 +55,35 @@ int sys_getpid()
 {
 	return current()->PID;
 }
+
+int sys_read (int fd, char *buf, int count){
+  
+  int ret;
+  if ((ret = check_fd(fd, LECTURA)))
+		return ret;
+	if (count < 0)
+		return -EINVAL;
+	if (!access_ok(VERIFY_WRITE, buf, count))
+		return -EFAULT;
+
+
+  current()->len_chars_read = count;
+  if(!list_empty(&keyboard_queue)){
+    update_process_state_rr(current(), &keyboard_queue);
+    sched_next_rr();
+  }
+  while(current()->len_chars_read){
+    if(has_next_c_buff()){
+      *buf++ = take_next_c_buff();
+      --current()->len_chars_read;
+    }else{
+      update_process_state_rr(current(), &keyboard_queue);
+      sched_next_rr();
+    }
+  }
+  return count;
+}
+
 
 int global_PID=1000;
 

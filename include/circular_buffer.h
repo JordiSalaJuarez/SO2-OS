@@ -1,7 +1,7 @@
 #ifndef _CIRCULAR_BUFFER_H_
 #define _CIRCULAR_BUFFER_H_
 
-#define N_ITEMS_C_BUFF 20
+#define N_ITEMS_C_BUFF 8
 
 extern char buff_keyboard[N_ITEMS_C_BUFF];
 extern int begin_c_buffer;

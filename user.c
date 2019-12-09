@@ -39,7 +39,11 @@ int __attribute__ ((__section__(".text.main")))
   clone(my_func, &stack[4096]);
   while(1);
   #endif
-  
+  // char buff[5] = "";
+  // read(1, buff, 1);
+  // write(1, buff, 1);
+  // write(1,"OK", 2);
+  // while(1);
   runjp();
-  while(1);
+	while(1);
 }

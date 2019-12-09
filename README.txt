@@ -1,25 +1,19 @@
 *** This tar file contains the following files:
 
-* libjp2.a: Test suite for the 2nd submission code. It contains the user calls
+* libjpread.a: Test suite for testing the read system call. It contains the user calls
   'runjp' and 'runjp_rank' to execute the tests plus all the necessary code to
   execute them.
-* README_E2.txt: this file specifies the pre-requisites for each test in libjp2.a.
-
-
-*** REQUIREMENTS needed by the test suite:
-
-- a list of processes ready to be executed called 'readyqueue'
-- a couple of functions to read/modify the quantum of a process (get_quantum, set_quantum)
-- round-robin scheduling policy (update_current_state_rr, sched_next_rr)
-- 'get_stats' system call must work correctly
+* libjpsbrk.a: Test suite for testing the sbrk system call. It contains the user calls
+  'runjp' and 'runjp_rank' to execute the tests plus all the necessary code to
+  execute them.
+* README_E4.txt: this file specifies the pre-requisites for each test.
 
 
 *** INSTALLATION:
-
 * You have to:
 	1) Create a soft link named libjp.a pointing to the library with the
-  tests that you want to run (libjp2.a).
-		$ ln -s libjp2.a libjp.a
+  tests that you want to run (for example: libjpread.a).
+		$ ln -s libjpread.a libjp.a
 
 	2) Modify the Makefile so the user target is linked with the libjp.a file.
 		...
@@ -59,13 +53,9 @@
 		port_e9_hack: enabled=1
 
 
+
 *** NOTES:
 
 * You have to take into account that the tests in a test suite are cumulative.
   That is, if one test fails then the execution of the rest of the tests may be
   inconsistent.
-
-* This test may BLOCK your processes, this means that the blocked process will
-  be moved to a special list which is not accesible from your code, and therefore
-  it will not be accessible through the READY list. You can use the special function
-  'int zeos_is_blocked_pid(int pid)' to detect this situation.

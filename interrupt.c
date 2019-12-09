@@ -10,6 +10,7 @@
 #include <sched.h>
 
 #include <zeos_interrupt.h>
+#include <circular_buffer.h>
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -17,11 +18,11 @@ Register    idtR;
 char char_map[] =
 {
   '\0','\0','1','2','3','4','5','6',
-  '7','8','9','0','\'','¡','\0','\0',
+  '7','8','9','0','\'','ï¿½','\0','\0',
   'q','w','e','r','t','y','u','i',
   'o','p','`','+','\0','\0','a','s',
-  'd','f','g','h','j','k','l','ñ',
-  '\0','º','\0','ç','z','x','c','v',
+  'd','f','g','h','j','k','l','ï¿½',
+  '\0','ï¿½','\0','ï¿½','z','x','c','v',
   'b','n','m',',','.','-','\0','*',
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0','\0','\0','\0','\0','\0','7',
@@ -42,8 +43,6 @@ void clock_routine()
 }
 
 
-pcb->ebp[-2]
-
 
 void keyboard_routine()
 {
@@ -52,17 +51,15 @@ void keyboard_routine()
   if (c&0x80){
     append_c_buff(char_map[c&0x7f]);
     if(!list_empty(&keyboard_queue)){
-      struct task_struct *ts = list_head_to_task_struct(list_first(&keyboard_queue));
-      if(ts->len_chars_read <=  len_c_buffer || len_c_buffer == N_ITEMS_C_BUFF){
-        update_process_state_rr(ts, NULL);
-        if(current() != idle_task)update_process_state_rr(current(), &readyqueue);
-        
-        remaining_quantum=get_quantum(ts);
-        update_stats(&(current()->p_stats.system_ticks), &(current()->p_stats.elapsed_total_ticks));
-        update_stats(&(ts->p_stats.ready_ticks), &(ts->p_stats.elapsed_total_ticks));
-        ts->p_stats.total_trans++;
-
-        task_switch((union task_union*)ts);
+      struct list_head *e;
+      struct task_struct *t;
+      e = list_first(&keyboard_queue);
+      t = list_head_to_task_struct(e);
+      if(t->len_chars_read <=  len_c_buffer || len_c_buffer == N_ITEMS_C_BUFF){
+        list_del(e);
+        list_add(e, &readyqueue);
+        update_process_state_rr(current(), &readyqueue);
+        sched_next_rr();
       }
     }
     printc_xy(0, 0, char_map[c&0x7f]);

@@ -174,3 +174,20 @@ ENTRY(sem_destroy)
 	js nok	// if (eax < 0) -> 
 	popl %ebp
 	ret
+
+
+/* int read(int fd, char *buff, int count) */
+ENTRY(read)
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $3, %eax
+	movl 0x8(%ebp), %ebx;	//fd
+	movl 0xC(%ebp), %ecx;	//buffer
+	movl 0x10(%ebp), %edx;	//size
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -> 
+	popl %ebp
+	ret

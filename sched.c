@@ -244,9 +244,9 @@ void init_task1(void)
 
   tss.esp0=(DWord)&(uc->stack[KERNEL_STACK_SIZE]);
   setMSR(0x175, 0, (unsigned long)&(uc->stack[KERNEL_STACK_SIZE]));
-
-  c->heap_start = (int)task_struct + (TOTAL_PAGES-1) * PAGE_SIZE;
-  c->heap_end = c->heap_start;
+  
+  c->heap_start = (TOTAL_PAGES-1) * PAGE_SIZE;
+  c->heap_end = c->heap_start - 1;
   set_cr3(c->dir_pages_baseAddr);
 }
 

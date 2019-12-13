@@ -209,54 +209,39 @@ int sys_sem_destroy(int n_sem){
 void *sys_sbrk(int increment){
   struct task_struct *ts = current();
   page_table_entry *process_PT = get_PT(current());
-  // for (pag=0; pag<NUM_PAG_DATA; pag++)
-  // {
-  //   new_ph_pag=alloc_frame();
-  //   if (new_ph_pag!=-1) /* One page allocated */
-  //   {
-  //     set_ss_pag(process_PT, PAG_LOG_INIT_DATA+pag, new_ph_pag);
-  //   }
-  //   else /* No more free pages left. Deallocate everything */
-  //   {
-  //     /* Deallocate allocated pages. Up to pag. */
-  //     for (i=0; i<pag; i++)
-  //     {
-  //       free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
-  //       del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
-  //     }
-  //     /* Deallocate task_struct */
-  //     list_add_tail(lhcurrent, &freequeue);
-      
-  //     /* Return error */
-  //     return -EAGAIN; 
-  //   }
-  // }
 
   if (increment > 0){
-    int begin = PH_PAGE((void *)(((char *) current()->heap_end) - increment));
-    int end = PH_PAGE(current()->heap_end);
+    int begin = PH_PAGE((int)(((char *) current()->heap_end) - increment + 1));
+    int end = PH_PAGE((int)(current()->heap_end + 1));
 
-    if(begin <= USER_FIRST_PAGE + NUM_PAG_CODE + NUM_PAG_DATA){
+    if(begin < USER_FIRST_PAGE + NUM_PAG_CODE + NUM_PAG_DATA){
       return -1;
     }
     
-    for(int page = begin + 1; page < end +1; ++page){
+    for(int page = begin; page < end; ++page){
       int new_ph_pag = alloc_frame();
       if (new_ph_pag == -1) return -1;
       set_ss_pag(process_PT, page, new_ph_pag);
     }
     current()->heap_end = (void *)(((char *) current()->heap_end) - increment);
     return (void *)(((char *) current()->heap_end) + 1);
+
   }else if (increment < 0){
+    int begin = PH_PAGE((int)(current()->heap_end + 1));
+    int end = PH_PAGE((int)(((char *) current()->heap_end) - increment + 1));
+    if(end >= PH_PAGE((int)current()->heap_start)){
+      return -1;
+    }
+     for(int page = begin; page < end; ++page){
+      free_frame(get_frame(process_PT, page));
+      del_ss_pag(process_PT, page);
+    }
+    current()->heap_end = (void *)(((char *) current()->heap_end) - increment);
+    return (void *)(((char *) current()->heap_end) + 1);
 
   }else{
     return (void *)(((char *) current()->heap_end) + 1);
   }
-
-
-  if (!process_PT[PH_PAGE(ts->heap_end)].bits.
-
-
 }
 
 
@@ -317,7 +302,7 @@ int sys_fork(void)
   {
     set_ss_pag(process_PT, PAG_LOG_INIT_CODE+pag, get_frame(parent_PT, PAG_LOG_INIT_CODE+pag));
   }
-  for (pag=PH_PAGE(current()->heap_start); pag<PH_PAGE(current()->heap_end)+1; pag++)
+  for (pag=PH_PAGE((int)current()->heap_end)+1; pag<PH_PAGE((int)current()->heap_start); pag++)
   {
     set_ss_pag(process_PT, pag, get_frame(parent_PT, pag));
   }
@@ -332,14 +317,13 @@ int sys_fork(void)
     del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
   }
 
-  for (pag=PH_PAGE(current()->heap_end)+1; pag<PH_PAGE(current()->heap_start); pag++)
+  for (pag=PH_PAGE((int)current()->heap_end)+1; pag<PH_PAGE((int)current()->heap_start); pag++)
   {
     /* Map one child page to parent's address space. */
-    set_ss_pag(parent_PT, current()->heap_start+1, get_frame(process_PT, pag));
-    copy_data((void*)(pag<<12), (void*)((current()->heap_start+1)<<12), PAGE_SIZE);
-    del_ss_pag(parent_PT,current()->heap_start+1);
+    set_ss_pag(parent_PT, PH_PAGE((int)current()->heap_start), get_frame(process_PT, pag));
+    copy_data((void*)(pag<<12), (void*)(((int)current()->heap_start)<<12), PAGE_SIZE);
+    del_ss_pag(parent_PT, PH_PAGE((int)current()->heap_start));
   }
-
 
 
   /* Deny access to the child's memory space */
@@ -447,6 +431,13 @@ void sys_exit()
       free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
       del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
     }
+    for (int pag=PH_PAGE((int)current()->heap_end)+1; pag<PH_PAGE((int)current()->heap_start); pag++)
+   {
+    free_frame(get_frame(process_PT, pag));
+    del_ss_pag(process_PT, pag);
+    }
+
+
   }
   /* Free task_struct */
   list_add_tail(&(current()->list), &freequeue);

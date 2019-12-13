@@ -44,6 +44,13 @@ int __attribute__ ((__section__(".text.main")))
   // write(1, buff, 1);
   // write(1,"OK", 2);
   // while(1);
-  runjp();
+  char volatile * first_addr = (char *)sbrk(0);
+  char volatile * buff = (char *)sbrk(4);
+  *(buff) = 'a';
+  *(buff+1) = 'b';
+  *(buff+2) = 'c';
+  *(buff+3) = 'd';
+  write(1, buff, 4);
+  // runjp();
 	while(1);
 }

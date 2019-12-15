@@ -224,12 +224,12 @@ void *sys_sbrk(int increment){
       set_ss_pag(process_PT, page, new_ph_pag);
     }
     current()->heap_end = (void *)(((char *) current()->heap_end) - increment);
-    return (void *)(((char *) current()->heap_end) + 1);
+    return (void *)(current()->heap_end + 1);
 
   }else if (increment < 0){
     int begin = PH_PAGE((int)(current()->heap_end + 1));
     int end = PH_PAGE((int)(((char *) current()->heap_end) - increment + 1));
-    if(end >= PH_PAGE((int)current()->heap_start)){
+    if(PH_PAGE((int)(current()->heap_end - increment)) >= PH_PAGE((int)current()->heap_start)){
       return -1;
     }
      for(int page = begin; page < end; ++page){
@@ -237,10 +237,10 @@ void *sys_sbrk(int increment){
       del_ss_pag(process_PT, page);
     }
     current()->heap_end = (void *)(((char *) current()->heap_end) - increment);
-    return (void *)(((char *) current()->heap_end) + 1);
+    return (void *)(current()->heap_end + 1);
 
   }else{
-    return (void *)(((char *) current()->heap_end) + 1);
+    return (void *)(current()->heap_end + 1);
   }
 }
 
@@ -302,7 +302,7 @@ int sys_fork(void)
   {
     set_ss_pag(process_PT, PAG_LOG_INIT_CODE+pag, get_frame(parent_PT, PAG_LOG_INIT_CODE+pag));
   }
-  for (pag=PH_PAGE((int)current()->heap_end)+1; pag<PH_PAGE((int)current()->heap_start); pag++)
+  for (pag=PH_PAGE((int)(current()->heap_end+1)); pag<PH_PAGE((int)current()->heap_start); pag++)
   {
     set_ss_pag(process_PT, pag, get_frame(parent_PT, pag));
   }
@@ -317,7 +317,7 @@ int sys_fork(void)
     del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
   }
 
-  for (pag=PH_PAGE((int)current()->heap_end)+1; pag<PH_PAGE((int)current()->heap_start); pag++)
+  for (pag=PH_PAGE((int)(current()->heap_end+1)); pag<PH_PAGE((int)current()->heap_start); pag++)
   {
     /* Map one child page to parent's address space. */
     set_ss_pag(parent_PT, PH_PAGE((int)current()->heap_start), get_frame(process_PT, pag));
@@ -431,7 +431,7 @@ void sys_exit()
       free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
       del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
     }
-    for (int pag=PH_PAGE((int)current()->heap_end)+1; pag<PH_PAGE((int)current()->heap_start); pag++)
+    for (int pag=PH_PAGE((int)(current()->heap_end+1)); pag<PH_PAGE((int)current()->heap_start); pag++)
    {
     free_frame(get_frame(process_PT, pag));
     del_ss_pag(process_PT, pag);

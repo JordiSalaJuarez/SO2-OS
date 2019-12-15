@@ -26,7 +26,7 @@ void my_func(void){
 
 #endif
 
-int __attribute__ ((__section__(".text.main")))
+int __attribute__ ((__section__(".text.main"))) __attribute__((optimize("O0")))
   main(void)
 {
     /* Next line, tries to move value 0 to CR3 register. This register is a privileged one, and so it will raise an exception */
@@ -44,13 +44,16 @@ int __attribute__ ((__section__(".text.main")))
   // write(1, buff, 1);
   // write(1,"OK", 2);
   // while(1);
-  char volatile * first_addr = (char *)sbrk(0);
-  char volatile * buff = (char *)sbrk(4);
-  *(buff) = 'a';
-  *(buff+1) = 'b';
-  *(buff+2) = 'c';
-  *(buff+3) = 'd';
-  write(1, buff, 4);
-  // runjp();
+
+  // char * first_addr = (char *)sbrk(0);
+  // char * buff = (char *)sbrk(4);
+  // buff[0] = 'a';
+  // buff[1] = 'b';
+  // buff[2] = 'c';
+  // buff[3] = 'd';
+  // sbrk(-4);
+  // write(1, buff, 4);
+
+  runjp();
 	while(1);
 }

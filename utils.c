@@ -76,10 +76,12 @@ int access_ok(int type, const void * addr, unsigned long size)
       /* Should suppose no support for automodifyable code */
       if ((addr_ini>=USER_FIRST_PAGE+NUM_PAG_CODE)&&
           (addr_fin<=USER_FIRST_PAGE+NUM_PAG_CODE+NUM_PAG_DATA))
-	  return 1;
+          //(addr_fin <= TOTAL_PAGES * PAGE_SIZE)) // This is a dirty hotfix, we should have access to the boundaries of the stack to check if addr is inside stack 
+	    return 1;
     default:
       if ((addr_ini>=USER_FIRST_PAGE)&&
   	(addr_fin<=(USER_FIRST_PAGE+NUM_PAG_CODE+NUM_PAG_DATA)))
+    //(addr_fin <= TOTAL_PAGES * PAGE_SIZE)) // This is a dirty hotfix, we should have access to the boundaries of the stack to check if addr is inside stack 
           return 1;
   }
   return 0;
